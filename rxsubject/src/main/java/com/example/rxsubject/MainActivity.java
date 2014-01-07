@@ -15,6 +15,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import rx.Subscription;
 import rx.android.concurrency.AndroidSchedulers;
 import rx.util.functions.Action1;
 
@@ -111,6 +112,7 @@ public class MainActivity extends ActionBarActivity
      * fragment.
      */
     private static final String ARG_SECTION_NUMBER = "section_number";
+    private Subscription mSubscription;
 
     /**
      * Returns a new instance of this fragment for the given section
@@ -134,19 +136,33 @@ public class MainActivity extends ActionBarActivity
       TextView textView = (TextView) rootView.findViewById(R.id.section_label);
       textView.setText(Integer.toString(getArguments().getInt(ARG_SECTION_NUMBER)));
 
-      BaseApplication.locationProvider.locationObserver()
+      mSubscription = BaseApplication.locationProvider.locationObserver()
           .observeOn(AndroidSchedulers.mainThread())
           .subscribe(new Action1<Location>() {
-            @Override
-            public void call(Location location) {
-              if (location != null) {
-                ((TextView) rootView.findViewById(R.id.latitude)).setText(String.valueOf(location.getLatitude()));
-                ((TextView) rootView.findViewById(R.id.longitude)).setText(String.valueOf(location.getLongitude()));
-              }
-            }
-          });
+                       @Override
+                       public void call(Location location) {
+                         if (location != null) {
+                           ((TextView) rootView.findViewById(R.id.latitude)).setText(String.valueOf(location.getLatitude()));
+                           ((TextView) rootView.findViewById(R.id.longitude)).setText(String.valueOf(location.getLongitude()));
+                         }
+                       }
+                     }, new Action1<Throwable>() {
+                       @Override
+                       public void call(Throwable throwable) {
+                         ((TextView) rootView.findViewById(R.id.latitude)).setText(String.valueOf("Error"));
+                         ((TextView) rootView.findViewById(R.id.longitude)).setText(String.valueOf(throwable.getMessage()));
+                       }
+                     }
+          );
 
       return rootView;
+    }
+
+    @Override
+    public void onDestroyView() {
+      super.onDestroyView();
+
+      mSubscription.unsubscribe();
     }
 
     @Override

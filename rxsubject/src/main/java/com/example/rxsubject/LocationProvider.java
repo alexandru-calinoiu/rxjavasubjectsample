@@ -6,6 +6,7 @@ import android.os.Bundle;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
+import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
 import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
@@ -45,7 +46,7 @@ public class LocationProvider {
     }, new GooglePlayServicesClient.OnConnectionFailedListener() {
       @Override
       public void onConnectionFailed(ConnectionResult connectionResult) {
-        // propagate errors
+        behaviorSubject.onError(new GooglePlayServicesNotAvailableException(connectionResult.getErrorCode()));
       }
     }
     );
